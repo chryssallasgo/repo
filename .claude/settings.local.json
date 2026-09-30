@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(rtk read *)",
-      "Bash(rtk gain *)"
+      "Bash(rtk gain *)",
+      "Bash(rtk php *)",
+      "Bash(rtk ls *)"
     ]
   },
   "enabledPlugins": {}
