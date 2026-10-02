@@ -1,4 +1,5 @@
 <!-- CC 09/29/26 Simple form to submit name and age to action.php -->
+<!-- Allasgo 10/02/26 Form collects user name and age for submission to action.php -->
 <!DOCTYPE html>
 <html>
 <head>

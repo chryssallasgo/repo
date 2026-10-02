@@ -1,4 +1,5 @@
 <?php
+// Allasgo 10/02/26 Check if mysqli extension is available
 // Source - https://stackoverflow.com/a/670012
 // Posted by karim79
 // Retrieved 2026-09-29, License - CC BY-SA 2.5

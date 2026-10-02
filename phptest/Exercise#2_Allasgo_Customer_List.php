@@ -1,142 +1,137 @@
 <?php
-// CC 09/29/26 Customer management system with CRUD operations for customers and payments
+// ACH 09/29/26 code logic was done with the help of Claude Code
+// Customer management system with CRUD operations for customers and payments
+// the php used to connect to the database is in db.php but will not be pushed in repo for security reasons. It is in the .gitignore file. The .env file is also in the .gitignore file for security reasons. The .env file contains the database connection information. The .env file is not pushed to the repo for security reasons
 require_once 'db.php';
-
-// CC 09/29/26 Set default sort and order from GET parameters
-// Default sort and order
-$sort = isset($_GET['sort']) ? $conn->real_escape_string($_GET['sort']) : 'last_name';
+$sort = isset($_GET['sort']) ? $connection->real_escape_string($_GET['sort']) : 'last_name';
 $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'DESC' ? 'DESC' : 'ASC';
 
 // Determine next order for toggling
 $next_order = ($order === 'ASC') ? 'DESC' : 'ASC';
 
-// CC 09/29/26 Get action and ID from GET parameters
-// Actions
+// ACH 09/29/26 Get action and ID from GET parameters
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 // CC 09/29/26 Handle form submissions for customer and payment operations
-// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $post_action = isset($_POST['action']) ? $_POST['action'] : '';
     if ($post_action === 'add') {
-        $first = $conn->real_escape_string($_POST['first_name']);
-        $last = $conn->real_escape_string($_POST['last_name']);
-        $street = $conn->real_escape_string($_POST['street_address']);
-        $city = $conn->real_escape_string($_POST['city']);
-        $phone = $conn->real_escape_string($_POST['phone']);
+        $first = $connection->real_escape_string($_POST['first_name']);
+        $last = $connection->real_escape_string($_POST['last_name']);
+        $street = $connection->real_escape_string($_POST['street_address']);
+        $city = $connection->real_escape_string($_POST['city']);
+        $phone = $connection->real_escape_string($_POST['phone']);
         $sql = "INSERT INTO customer (first_name, last_name, street_address, city, phone) VALUES ('$first', '$last', '$street', '$city', '$phone')";
-        if ($conn->query($sql) === TRUE) {
+        if ($connection->query($sql) === TRUE) {
             header("Location: customer.php");
             exit;
         } else {
             // CC 09/29/26 Log error internally and show user-friendly message
-            error_log("Database error: " . $sql . " - " . $conn->error);
+            error_log("Database error: " . $sql . " - " . $connection->error);
             $error = "An error occurred while processing your request. Please try again.";
         }
     } elseif ($post_action === 'update') {
         $id = (int)$_POST['id'];
-        $first = $conn->real_escape_string($_POST['first_name']);
-        $last = $conn->real_escape_string($_POST['last_name']);
-        $street = $conn->real_escape_string($_POST['street_address']);
-        $city = $conn->real_escape_string($_POST['city']);
-        $phone = $conn->real_escape_string($_POST['phone']);
+        $first = $connection->real_escape_string($_POST['first_name']);
+        $last = $connection->real_escape_string($_POST['last_name']);
+        $street = $connection->real_escape_string($_POST['street_address']);
+        $city = $connection->real_escape_string($_POST['city']);
+        $phone = $connection->real_escape_string($_POST['phone']);
         $sql = "UPDATE customer SET first_name='$first', last_name='$last', street_address='$street', city='$city', phone='$phone' WHERE customer_serial=$id";
-        if ($conn->query($sql) === TRUE) {
+        if ($connection->query($sql) === TRUE) {
             header("Location: customer.php");
             exit;
         } else {
             // CC 09/29/26 Log error internally and show user-friendly message
-            error_log("Database error: " . $sql . " - " . $conn->error);
+            error_log("Database error: " . $sql . " - " . $connection->error);
             $error = "An error occurred while processing your request. Please try again.";
         }
     } elseif ($post_action === 'delete') {
         $id = (int)$_POST['id'];
         // Delete payments first (foreign key not defined but safe)
-        $conn->query("DELETE FROM payment WHERE customer_serial=$id");
+        $connection->query("DELETE FROM payment WHERE customer_serial=$id");
         $sql = "DELETE FROM customer WHERE customer_serial=$id";
-        if ($conn->query($sql) === TRUE) {
+        if ($connection->query($sql) === TRUE) {
             header("Location: customer.php");
             exit;
         } else {
             // CC 09/29/26 Log error internally and show user-friendly message
-            error_log("Database error: " . $sql . " - " . $conn->error);
+            error_log("Database error: " . $sql . " - " . $connection->error);
             $error = "An error occurred while processing your request. Please try again.";
         }
     } elseif ($post_action === 'add_payment') {
-        $cid = (int)$_POST['customer_serial'];
-        $date = $conn->real_escape_string($_POST['payment_date']);
-        $amount = $conn->real_escape_string($_POST['payment_amount']);
-        $desc = $conn->real_escape_string($_POST['description']);
-        $sql = "INSERT INTO payment (customer_serial, payment_date, payment_amount, description) VALUES ($cid, '$date', $amount, '$desc')";
-        if ($conn->query($sql) === TRUE) {
-            header("Location: customer.php?action=payments&id=$cid");
+        $customer_id = (int)$_POST['customer_serial'];
+        $date = $connection->real_escape_string($_POST['payment_date']);
+        $amount = $connection->real_escape_string($_POST['payment_amount']);
+        $desc = $connection->real_escape_string($_POST['description']);
+        $sql = "INSERT INTO payment (customer_serial, payment_date, payment_amount, description) VALUES ($customer_id, '$date', $amount, '$desc')";
+        if ($connection->query($sql) === TRUE) {
+            header("Location: customer.php?action=payments&id=$customer_id");
             exit;
         } else {
             // CC 09/29/26 Log error internally and show user-friendly message
-            error_log("Database error: " . $sql . " - " . $conn->error);
+            error_log("Database error: " . $sql . " - " . $connection->error);
             $error = "An error occurred while processing your request. Please try again.";
         }
     } elseif ($post_action === 'update_payment') {
-        $pid = (int)$_POST['id'];
-        $cid = (int)$_POST['customer_serial'];
-        $date = $conn->real_escape_string($_POST['payment_date']);
-        $amount = $conn->real_escape_string($_POST['payment_amount']);
-        $desc = $conn->real_escape_string($_POST['description']);
-        $sql = "UPDATE payment SET payment_date='$date', payment_amount=$amount, description='$desc' WHERE payment_serial=$pid";
-        if ($conn->query($sql) === TRUE) {
-            header("Location: customer.php?action=payments&id=$cid");
+        $payment_id = (int)$_POST['id'];
+        $customer_id = (int)$_POST['customer_serial'];
+        $date = $connection->real_escape_string($_POST['payment_date']);
+        $amount = $connection->real_escape_string($_POST['payment_amount']);
+        $desc = $connection->real_escape_string($_POST['description']);
+        $sql = "UPDATE payment SET payment_date='$date', payment_amount=$amount, description='$desc' WHERE payment_serial=$payment_id";
+        if ($connection->query($sql) === TRUE) {
+            header("Location: customer.php?action=payments&id=$customer_id");
             exit;
         } else {
             // CC 09/29/26 Log error internally and show user-friendly message
-            error_log("Database error: " . $sql . " - " . $conn->error);
+            error_log("Database error: " . $sql . " - " . $connection->error);
             $error = "An error occurred while processing your request. Please try again.";
         }
     } elseif ($post_action === 'delete_payment') {
-        $pid = (int)$_POST['id'];
-        $cid = (int)$_POST['customer_serial'];
-        $sql = "DELETE FROM payment WHERE payment_serial=$pid";
-        if ($conn->query($sql) === TRUE) {
-            header("Location: customer.php?action=payments&id=$cid");
+        $payment_id = (int)$_POST['id'];
+        $customer_id = (int)$_POST['customer_serial'];
+        $sql = "DELETE FROM payment WHERE payment_serial=$payment_id";
+        if ($connection->query($sql) === TRUE) {
+            header("Location: customer.php?action=payments&id=$customer_id");
             exit;
         } else {
             // CC 09/29/26 Log error internally and show user-friendly message
-            error_log("Database error: " . $sql . " - " . $conn->error);
+            error_log("Database error: " . $sql . " - " . $connection->error);
             $error = "An error occurred while processing your request. Please try again.";
         }
     }
 }
 
-// CC 09/29/26 Get customers list with specified sort and order
-// Fetch data for display
-function getCustomers($conn, $sort, $order)
-{
-    // CC 09/29/26 Build SQL query to select customer fields with sorting
-    $sql = "SELECT customer_serial, first_name, last_name, city, phone FROM customer ORDER BY $sort $order";
-    return $conn->query($sql);
-}
-
-// CC 09/29/26 Get payments list for a specific customer with specified sort and order
-function getPayments($conn, $customer_id, $sort, $order)
-{
-    // CC 09/29/26 Build SQL query to select payment fields for customer with sorting
-    $sql = "SELECT payment_serial, payment_date, payment_amount, description FROM payment WHERE customer_serial=$customer_id ORDER BY $sort $order";
-    return $conn->query($sql);
-}
-
-// CC 09/29/26 Get customer data for edit/delete/payments operations
-// Get customer data for edit/delete/payments
+// ACH 09/29/26 Get customer data for edit/delete/payments
 $customer = null;
 if (($action === 'edit' || $action === 'delete' || $action === 'payments') && $id > 0) {
     $sql = "SELECT * FROM customer WHERE customer_serial=$id";
-    $result = $conn->query($sql);
+    $result = $connection->query($sql);
     if ($result && $result->num_rows > 0) {
         $customer = $result->fetch_assoc();
     }
 }
 
-// For payments list, get sort/order from GET or default
-$pay_sort = isset($_GET['pay_sort']) ? $conn->real_escape_string($_GET['pay_sort']) : 'payment_date';
+// CC 09/29/26 Get customers list with specified sort and order
+function get_customers($conn, $sort, $order)
+{
+    // ACH 09/29/26 Build SQL query to select customer fields with sorting
+    $sql = "SELECT customer_serial, first_name, last_name, city, phone FROM customer ORDER BY $sort $order";
+    return $conn->query($sql);
+}
+
+
+function get_payments($conn, $customer_id, $sort, $order)
+{
+    // ACH 09/29/26 SQL query to select payment fields for customer with sorting
+    $sql = "SELECT payment_serial, payment_date, payment_amount, description FROM payment WHERE customer_serial=$customer_id ORDER BY $sort $order";
+    return $conn->query($sql);
+}
+
+// ACH 09/29/26 For payments list, get sort/order from GET or default
+$pay_sort = isset($_GET['pay_sort']) ? $connection->real_escape_string($_GET['pay_sort']) : 'payment_date';
 $pay_order = isset($_GET['pay_order']) && strtoupper($_GET['pay_order']) === 'DESC' ? 'DESC' : 'ASC';
 $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
 ?>
@@ -180,6 +175,10 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
             color: white;
             border-radius: 3px;
             font-size: 14px;
+        }
+
+        .btn.back {
+            background-color: #555;
         }
 
         .edit {
@@ -243,7 +242,7 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
     <?php if (isset($error)) echo "<div class='error'>$error</div>"; ?>
 
     <?php
-    // CC 09/29/26 Handle different actions based on GET parameter
+    // ACH 09/29/26 Handle different actions based on GET parameter
     switch ($action) {
         case 'list':
     ?>
@@ -286,7 +285,7 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
                 </thead>
                 <tbody>
                     <?php
-                    $result = getCustomers($conn, $sort, $order);
+                    $result = get_customers($connection, $sort, $order);
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
                             echo "<tr>";
@@ -432,7 +431,7 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
                     </thead>
                     <tbody>
                         <?php
-                        $presult = getPayments($conn, $customer['customer_serial'], $pay_sort, $pay_order);
+                        $presult = get_payments($connection, $customer['customer_serial'], $pay_sort, $pay_order);
                         if ($presult->num_rows > 0) {
                             while ($prow = $presult->fetch_assoc()) {
                                 echo "<tr>";
@@ -458,18 +457,18 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
             break;
 
         case 'add_payment':
-            $cid = isset($_GET['cid']) ? (int)$_GET['cid'] : 0;
-            if ($cid > 0) {
+            $customer_id = isset($_GET['cid']) ? (int)$_GET['cid'] : 0;
+            if ($customer_id > 0) {
                 // verify customer exists
-                $cust_sql = "SELECT * FROM customer WHERE customer_serial=$cid";
-                $cust_res = $conn->query($cust_sql);
+                $cust_sql = "SELECT * FROM customer WHERE customer_serial=$customer_id";
+                $cust_res = $connection->query($cust_sql);
                 if ($cust_res && $cust_res->num_rows > 0) {
                     $cust = $cust_res->fetch_assoc();
                 ?>
                     <h2>Add Payment for <?php echo htmlspecialchars($cust['last_name'] . ', ' . $cust['first_name']); ?></h2>
                     <form method="post" action="customer.php">
                         <input type="hidden" name="action" value="add_payment">
-                        <input type="hidden" name="customer_serial" value="<?php echo $cid; ?>">
+                        <input type="hidden" name="customer_serial" value="<?php echo $customer_id; ?>">
                         <div class="form-group">
                             <label for="payment_date">Payment Date:</label>
                             <input type="date" id="payment_date" name="payment_date" required>
@@ -483,7 +482,7 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
                             <input type="text" id="description" name="description">
                         </div>
                         <input type="submit" value="Save Payment">
-                        <a href="customer.php?action=payments&id=<?php echo $cid; ?>" class="btn back">Cancel</a>
+                        <a href="customer.php?action=payments&id=<?php echo $customer_id; ?>" class="btn back">Cancel</a>
                     </form>
                 <?php
                 } else {
@@ -495,19 +494,19 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
             break;
 
         case 'edit_payment':
-            $pid = isset($_GET['pid']) ? (int)$_GET['pid'] : 0;
-            $cid = isset($_GET['cid']) ? (int)$_GET['cid'] : 0;
-            if ($pid > 0 && $cid > 0) {
-                $sql = "SELECT * FROM payment WHERE payment_serial=$pid AND customer_serial=$cid";
-                $result = $conn->query($sql);
+            $payment_id = isset($_GET['pid']) ? (int)$_GET['pid'] : 0;
+            $customer_id = isset($_GET['cid']) ? (int)$_GET['cid'] : 0;
+            if ($payment_id > 0 && $customer_id > 0) {
+                $sql = "SELECT * FROM payment WHERE payment_serial=$payment_id AND customer_serial=$customer_id";
+                $result = $connection->query($sql);
                 if ($result && $result->num_rows > 0) {
                     $payment = $result->fetch_assoc();
                 ?>
                     <h2>Edit Payment</h2>
                     <form method="post" action="customer.php">
                         <input type="hidden" name="action" value="update_payment">
-                        <input type="hidden" name="id" value="<?php echo $pid; ?>">
-                        <input type="hidden" name="customer_serial" value="<?php echo $cid; ?>">
+                        <input type="hidden" name="id" value="<?php echo $payment_id; ?>">
+                        <input type="hidden" name="customer_serial" value="<?php echo $customer_id; ?>">
                         <div class="form-group">
                             <label for="payment_date">Payment Date:</label>
                             <input type="date" id="payment_date" name="payment_date" value="<?php echo htmlspecialchars($payment['payment_date']); ?>" required>
@@ -521,7 +520,7 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
                             <input type="text" id="description" name="description" value="<?php echo htmlspecialchars($payment['description']); ?>">
                         </div>
                         <input type="submit" value="Update Payment">
-                        <a href="customer.php?action=payments&id=<?php echo $cid; ?>" class="btn back">Cancel</a>
+                        <a href="customer.php?action=payments&id=<?php echo $customer_id; ?>" class="btn back">Cancel</a>
                     </form>
                 <?php
                 } else {
@@ -533,11 +532,11 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
             break;
 
         case 'delete_payment':
-            $pid = isset($_GET['pid']) ? (int)$_GET['pid'] : 0;
-            $cid = isset($_GET['cid']) ? (int)$_GET['cid'] : 0;
-            if ($pid > 0 && $cid > 0) {
-                $sql = "SELECT * FROM payment WHERE payment_serial=$pid AND customer_serial=$cid";
-                $result = $conn->query($sql);
+            $payment_id = isset($_GET['pid']) ? (int)$_GET['pid'] : 0;
+            $customer_id = isset($_GET['cid']) ? (int)$_GET['cid'] : 0;
+            if ($payment_id > 0 && $customer_id > 0) {
+                $sql = "SELECT * FROM payment WHERE payment_serial=$payment_id AND customer_serial=$customer_id";
+                $result = $connection->query($sql);
                 if ($result && $result->num_rows > 0) {
                     $payment = $result->fetch_assoc();
                 ?>
@@ -549,10 +548,10 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
                     </p>
                     <form method="post" action="customer.php">
                         <input type="hidden" name="action" value="delete_payment">
-                        <input type="hidden" name="id" value="<?php echo $pid; ?>">
-                        <input type="hidden" name="customer_serial" value="<?php echo $cid; ?>">
+                        <input type="hidden" name="id" value="<?php echo $payment_id; ?>">
+                        <input type="hidden" name="customer_serial" value="<?php echo $customer_id; ?>">
                         <input type="submit" value="Confirm Delete" class="btn delete">
-                        <a href="customer.php?action=payments&id=<?php echo $cid; ?>" class="btn back">Cancel</a>
+                        <a href="customer.php?action=payments&id=<?php echo $customer_id; ?>" class="btn back">Cancel</a>
                     </form>
     <?php
                 } else {
@@ -564,7 +563,7 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
             break;
 
         default:
-            // fallback to list
+            // ACH 09/29/26 fallback to list
             header("Location: customer.php");
             exit;
     }
@@ -573,4 +572,4 @@ $pay_next_order = ($pay_order === 'ASC') ? 'DESC' : 'ASC';
 </body>
 
 </html>
-<?php $conn->close(); ?>
+<?php $connection->close(); ?>
